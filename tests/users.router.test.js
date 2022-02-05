@@ -1,5 +1,4 @@
 const request = require('supertest');
-const bcrypt = require('bcrypt');
 
 const { app } = require('../index');
 const User = require('../database/models/user.model');
@@ -30,9 +29,6 @@ const userExists = (user, done) => {
             expect(users[0].username).toEqual(user.username)
             // expect(users[0].email).toEqual(user.email) -> Yo por seguridad de mi API no regreso el email
 
-
-            console.log(user, users[0]);
-
             /* const equalsPasswords = bcrypt.compareSync(user.password, users[0].password);
             expect(equalsPasswords).toBeTruthy() */
             done();
@@ -50,7 +46,6 @@ describe('Users', () => {
             done();
         });
     });
-
 
     describe('GET/api/v1/users', () => {
 
@@ -95,6 +90,127 @@ describe('Users', () => {
                 });
         });
 
-    });
+        test('It should not be possible to create a user with a repeated email address', (done) => { 
+            Promise.all(testUsers.map(user => (new User(user).save()))) 
+            .then(users => { 
+                request(app) 
+                .post('/api/v1/users/register') 
+                .send({ 
+                    email: "andrestest@gmail.com", 
+                    password: "123456789andresTest", 
+                    username: "andresTest4", 
+                }) 
+                .end((err, res) => { 
+                    expect(res.status).toBe(400) 
+                    expect(res.body.message).toMatch('That email is not valid') 
+                    done() 
+                }) 
+            }) 
+        });
 
+        test('It should not be possible to create a user with a repeated username', (done) => { 
+            Promise.all(testUsers.map(user => (new User(user).save()))) 
+            .then(users => { 
+                request(app) 
+                .post('/api/v1/users/register') 
+                .send({ 
+                    email: "andrestest4@gmail.com", 
+                    password: "123456789andresTest", 
+                    username: "andresTest", 
+                }) 
+                .end((err, res) => { 
+                    expect(res.status).toBe(400) 
+                    expect(res.body.message).toMatch('That username is not available') 
+                    done() 
+                }) 
+            }) 
+        });
+
+        test('A user without email should not be created', (done) => { 
+            Promise.all(testUsers.map(user => (new User(user).save()))) 
+            .then(users => { 
+                request(app) 
+                .post('/api/v1/users/register') 
+                .send({ 
+                    password: "123456789andresTest", 
+                    username: "andresTest", 
+                }) 
+                .end((err, res) => { 
+                    expect(res.status).toBe(400) 
+                    expect(res.body.message).toMatch('\"email\" is required') 
+                    done() 
+                }) 
+            }) 
+        });
+
+        test('A user without username should not be created', (done) => { 
+            Promise.all(testUsers.map(user => (new User(user).save()))) 
+            .then(users => { 
+                request(app) 
+                .post('/api/v1/users/register') 
+                .send({ 
+                    email: "andresargote777@gmail.com",
+                    password: "123456789andresTest", 
+                }) 
+                .end((err, res) => { 
+                    expect(res.status).toBe(400) 
+                    expect(res.body.message).toMatch('\"username\" is required') 
+                    done() 
+                }) 
+            }) 
+        });
+
+        test('A user without password should not be created', (done) => { 
+            Promise.all(testUsers.map(user => (new User(user).save()))) 
+            .then(users => { 
+                request(app) 
+                .post('/api/v1/users/register') 
+                .send({ 
+                    username: "andres777",
+                    email: "andresargote777@gmail.com"
+                }) 
+                .end((err, res) => { 
+                    expect(res.status).toBe(400) 
+                    expect(res.body.message).toMatch('\"password\" is required') 
+                    done() 
+                }) 
+            }) 
+        });
+
+        test('A user with a password shorter than 8 characters should not be created', (done) => { 
+            Promise.all(testUsers.map(user => (new User(user).save()))) 
+            .then(users => { 
+                request(app) 
+                .post('/api/v1/users/register') 
+                .send({ 
+                    username: "andres777",
+                    email: "andresargote777@gmail.com",
+                    password: "1234567"
+                }) 
+                .end((err, res) => { 
+                    expect(res.status).toBe(400) 
+                    expect(res.body.message).toMatch('\"password\" length must be at least 8 characters long') 
+                    done() 
+                }) 
+            }) 
+        });
+
+        test('A user with a username longer than 30 characters should not be created', (done) => { 
+            Promise.all(testUsers.map(user => (new User(user).save()))) 
+            .then(users => { 
+                request(app) 
+                .post('/api/v1/users/register') 
+                .send({ 
+                    username: "dkxwxvfhxqneremqbypquyjmqwbvdxw",
+                    email: "andresargote777@gmail.com",
+                    password: "1234567"
+                }) 
+                .end((err, res) => { 
+                    expect(res.status).toBe(400) 
+                    expect(res.body.message).toMatch('\"username\" length must be less than or equal to 30 characters long') 
+                    done() 
+                }) 
+            }) 
+        });
+    });
 });

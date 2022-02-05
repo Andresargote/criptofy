@@ -36,7 +36,7 @@ class UserService {
         }
 
         if (existUsername) {
-            throw boom.badRequest('that username is not available');
+            throw boom.badRequest('That username is not available');
         }
 
         const user = await UserModel.create({

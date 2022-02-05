@@ -10,7 +10,6 @@ const instagram = Joi.string();
 const twitter = Joi.string();
 const tiktok = Joi.string();
 const telegram = Joi.string();
-const profileImg = Joi.string().uri();
 
 const createUserSchema = Joi.object({
     email: email.required(),
